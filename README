@@ -1,0 +1,32 @@
+How to mount the fingerprinting attack:
+=======================================
+
+Suppose you have visited N websites, collected the traffic using wireshark, and stored the information in .cap files.
+
+1. $ make
+
+2. $ ./capfilter web_trial.cap tor_entry_nodes 1 trace_name
+	-- web_trial.cap is the name of the cap file.
+	-- tor_entry_nodes is a text file, and each line in the file contains the ip address of a tor entry node. You can have multiple lines if you are using multiple tor entry nodes.
+	-- trace_name is file where you want to store the parsed results -- we call these results traces.
+NOTE: you need to change line 35 of capfilter.cpp to your client's ip address. gen_traces.rb calls capfilter many times in order to parse multiple .cap files.
+
+3. Suppose all the traces are stored in ./traces folder, and the format of the trace filename is web_trial.txt -- e.g. 2_1.txt means this trace file corresponds to the traffic when visiting website 2 for the 1st time.
+   $ mpirun -np CORES ./Levenshtein_cantor_mpi 1
+	-- CORES is an integer representing the number of threads you want to run
+Note: this program reads all the traces in ./trace folder, computes all pairwise Levenshtein distances of the traces, and outputs the results to CORES different files: ./cantor_tor_100_40_nodeN, where N = 0,1,...,CORES-1
+
+4. $ ./cantor2matrix output_matrix ./cantor_tor_100_40_node*
+	-- output_matrix is the file where you store the Levenshtein distance matrix, which is used as our svm customized kernel
+NOTE: you don't have to use miprun and cantor2matrix if you don't want to use mpi or you don't have a cluster. You can implement your own algorithm based on Damerau–Levenshtein distance (http://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance#Algorithm). The only purpose of step 3 and step 4 is to compute pairwise levenshtein distances for all the traces. However, you need to compute the normalized the distance -- i.e. given 2 traces, you need to compute DLdis(trace1, trace2)/min(|trace1|, |trace2|), where DLdis() computes the Damerau-Levenshtein distance.
+
+5. $ ./gen_gamma_matrix pow ./traces input_matrix output_matrix 1
+	-- pow is an integer, s.t. gamma = 2^pow
+	-- input_matrix is the matrix you get from step 4
+	-- output_matrix is the modified file
+NOTE: this program converts each element E in the input matrix to exp(-gamma*E*E), and stores it in the output matrix.
+
+
+6. install libsvm(http://www.csie.ntu.edu.tw/~cjlin/libsvm/)
+   $ ruby svmdotest.rb
+NOTE: since we want to do a stratified 10-fold cross-validation, we use the program gen_stratify to produce the test and train data sets.
