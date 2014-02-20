@@ -1,3 +1,8 @@
+Tor traces:
+===========
+dislog_1000_100.tar.gz contains parsed tor traces. e.g. (-638, 638, 1500 means the client sends a request of 638 bytes, and then receives
+two response packets of size 638 bytes and 1500 bytes). i_j.txt represents the trace of the ith website, jth trial.
+
 How to mount the fingerprinting attack:
 =======================================
 
