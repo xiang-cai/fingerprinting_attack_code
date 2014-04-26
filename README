@@ -10,11 +10,11 @@ Suppose you have visited N websites, collected the traffic using wireshark, and 
 
 1. $ make
 
-2. $ ./capfilter web_trial.cap tor_entry_nodes 1 trace_name
-	-- web_trial.cap is the name of the cap file.
-	-- tor_entry_nodes is a text file, and each line in the file contains the ip address of a tor entry node. You can have multiple lines if you are using multiple tor entry nodes.
-	-- trace_name is file where you want to store the parsed results -- we call these results traces.
-NOTE: you need to change line 35 of capfilter.cpp to your client's ip address. gen_traces.rb calls capfilter many times in order to parse multiple .cap files.
+2. $ ./capfilter outputlogfolder clientips.txt serverips.txt proxy_port_min proxy_port_max 1 capfile1 capfile2 ...
+	-- outputlogfolder is the folder you want to store the output logs.
+	-- clientips.txt(serverips.txt) is a text file containing one line, which is the ip address of the client(server). 
+	-- proxy_port_min(max) is the port range you want to filter.
+	-- capfile1 capfile2 ... are the pcap files you want to parse.
 
 3. Suppose all the traces are stored in ./traces folder, and the format of the trace filename is web_trial.txt -- e.g. 2_1.txt means this trace file corresponds to the traffic when visiting website 2 for the 1st time.
    $ mpirun -np CORES ./Levenshtein_cantor_mpi 1
@@ -31,7 +31,10 @@ NOTE: you don't have to use miprun and cantor2matrix if you don't want to use mp
 	-- output_matrix is the modified file
 NOTE: this program converts each element E in the input matrix to exp(-gamma*E*E), and stores it in the output matrix.
 
-
 6. install libsvm(http://www.csie.ntu.edu.tw/~cjlin/libsvm/)
-   $ ruby svmdotest.rb
+   $ ruby svm_precomputed_matrix.rb
 NOTE: since we want to do a stratified 10-fold cross-validation, we use the program gen_stratify to produce the test and train data sets.
+
+7. Panchenko's svm
+   $ ./gen_panchenko_features outputlogfolder websites trials
+   $ ruby svm_cross_validation.rb	
